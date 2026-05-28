@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div
+      class="sound-bar"
+      style="--i: 0; --bg-start: #0000ff90; --bg-end: #0055ff90"></div>
+    <div
+      class="sound-bar"
+      style="--i: 1; --bg-start: #0055ff90; --bg-end: #00aaff90"></div>
+    <div
+      class="sound-bar"
+      style="--i: 2; --bg-start: #00aaff90; --bg-end: #00ffff90"></div>
+    <div
+      class="sound-bar"
+      style="--i: 3; --bg-start: #00ffff90; --bg-end: #00ff8090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 4; --bg-start: #00ff8090; --bg-end: #00ff0090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 5; --bg-start: #00ff0090; --bg-end: #55ff0090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 6; --bg-start: #55ff0090; --bg-end: #aaff0090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 7; --bg-start: #aaff0090; --bg-end: #ffff0090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 8; --bg-start: #ffff0090; --bg-end: #ffaa0090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 9; --bg-start: #ffaa0090; --bg-end: #ff590090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 10; --bg-start: #ff590090; --bg-end: #ff000090"></div>
+    <div
+      class="sound-bar"
+      style="--i: 11; --bg-start: #ff000090; --bg-end: #ff390090"></div>
+  </body>
+
+  <script>
+    document.querySelectorAll('.sound-bar').forEach((bar) => {
+      bar.style.setProperty('--r', '-' + Math.random() + 's');
+    });
+  </script>
+</html>
