@@ -44,37 +44,60 @@
         audioContext.connect(analyser);
         analyser.connect(audioContext.context.destination);
 
-        analyser.fftSize = 64;
+        analyser.fftSize = 2048;
 
         const bufferLen = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLen);
       }
+
+      if (ring.classList.contains('paused')) {
+        ring.classList.remove('paused');
+      }
+      if (!ring.classList.contains('rotating')) {
+        ring.classList.add('rotating');
+      }
       requestAni();
     });
 
+    audio.addEventListener('pause', () => {
+      if (!ring.classList.contains('paused')) {
+        ring.classList.add('paused');
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      if (!ring.classList.contains('paused')) {
+        ring.classList.add('paused');
+      }
+    });
+
+    // 1024 / 32 = 32, 每个bar占16个频率数据
     function requestAni() {
       if (!analyser || audio.paused || audio.ended) return;
       requestAnimationFrame(requestAni);
       analyser.getByteFrequencyData(dataArray);
 
       document.querySelectorAll('.sound-bar').forEach((bar, i) => {
-        const value = dataArray[i] / 255;
-        bar.style.setProperty('--bar-height', value * 200 + 'px');
+        let value = 0;
+        for (let j = 0; j < 32; j++) {
+          value += dataArray[j + i * 32];
+        }
+        value /= 32 * 255;
+
+        const height = value * 300;
+        if (height < 2) {
+          bar.style.setProperty('--bar-height', '2px');
+          return;
+        }
+        bar.style.setProperty('--bar-height', height + 'px');
       });
     }
 
-    let startTime = 0;
-    let timer;
     document.querySelector('.ring').addEventListener('click', () => {
       if (audio.paused) {
         audio.play();
-        timer = setInterval(() => {
-          ring.style.setProperty('transform', `rotate(${startTime}deg)`);
-          startTime += 1;
-        }, 100);
       } else {
         audio.pause();
-        timer && clearInterval(timer);
       }
     });
   </script>
