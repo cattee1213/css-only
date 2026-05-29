@@ -5,7 +5,8 @@
 }
 
 body {
-  background-color: #191919;
+  background: url(./image.png) no-repeat center center fixed;
+  background-size: cover;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
@@ -19,34 +20,38 @@ body {
 
 .sound-bar {
   height: 100%;
-  width: 50px;
+  width: calc(100% / 32);
   position: relative;
+  pointer-events: none;
 }
 
 .sound-bar::before {
   content: '';
   position: absolute;
   top: 0;
-  height: 2px;
+  height: var(--bar-height, 2px);
   width: 50px;
   background:
     linear-gradient(to right, var(--bg-start), var(--bg-end)),
     linear-gradient(to bottom, transparent, #fff);
   border-radius: 0 0 2px 2px;
 
-  opacity: 0.02;
+  opacity: 0.1;
 
-  animation: ani-scale-y var(--r) 1s ease-in-out infinite;
+  /* animation: ani-scale-y var(--r) 1s ease-in-out infinite; */
   transform-origin: top;
 
   filter: drop-shadow(0 0 5px var(--bg-start));
+
+  transition: height 0.1s ease-out;
+  will-change: height;
 }
 
 .sound-bar::after {
   content: '';
   position: absolute;
   bottom: 0;
-  height: 2px;
+  height: var(--bar-height, 2px);
   width: 50px;
 
   background:
@@ -54,11 +59,68 @@ body {
     linear-gradient(to top, transparent, #fff);
   border-radius: 2px 2px 0 0;
 
-  animation: ani-scale-y var(--r) 1s ease-in-out infinite;
+  /* animation: ani-scale-y var(--r) 1s ease-in-out infinite; */
 
   transform-origin: bottom;
 
   filter: drop-shadow(0 0 5px var(--bg-start));
+  transition: height 0.1s ease-out;
+  will-change: height;
+}
+
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #00000080;
+  backdrop-filter: blur(50px);
+}
+
+.ring {
+  position: absolute;
+  margin: auto;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background-image: url(./image.png);
+  /* animation: rotate 15s linear infinite; */
+  transition: transform 0.1s linear;
+}
+
+.ring::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  height: 304px;
+  width: 304px;
+  border-radius: 50%;
+  z-index: -1;
+  /* filter: drop-shadow(0 0 10px #fff); */
+}
+
+.ring::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  height: 304px;
+  width: 304px;
+  border: 2px solid #ffffff80;
+  border-radius: 50%;
+  z-index: -1;
+  filter: drop-shadow(0 0 10px #fff);
+  /* animation: wave 1s ease-out infinite; */
+}
+
+.player {
+  width: 0;
+  height: 0;
 }
 
 @keyframes ani-scale-y {
@@ -72,5 +134,22 @@ body {
 
   100% {
     height: 2px;
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(2);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(3);
+    opacity: 0;
   }
 }

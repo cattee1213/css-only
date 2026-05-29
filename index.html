@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-cn">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,47 +7,75 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div
-      class="sound-bar"
-      style="--i: 0; --bg-start: #0000ff90; --bg-end: #0055ff90"></div>
-    <div
-      class="sound-bar"
-      style="--i: 1; --bg-start: #0055ff90; --bg-end: #00aaff90"></div>
-    <div
-      class="sound-bar"
-      style="--i: 2; --bg-start: #00aaff90; --bg-end: #00ffff90"></div>
-    <div
-      class="sound-bar"
-      style="--i: 3; --bg-start: #00ffff90; --bg-end: #00ff8090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 4; --bg-start: #00ff8090; --bg-end: #00ff0090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 5; --bg-start: #00ff0090; --bg-end: #55ff0090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 6; --bg-start: #55ff0090; --bg-end: #aaff0090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 7; --bg-start: #aaff0090; --bg-end: #ffff0090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 8; --bg-start: #ffff0090; --bg-end: #ffaa0090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 9; --bg-start: #ffaa0090; --bg-end: #ff590090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 10; --bg-start: #ff590090; --bg-end: #ff000090"></div>
-    <div
-      class="sound-bar"
-      style="--i: 11; --bg-start: #ff000090; --bg-end: #ff390090"></div>
+    <div class="container">
+      <div class="ring"></div>
+    </div>
+    <audio src="./rule.mp3" class="player" controls></audio>
   </body>
 
   <script>
+    for (let i = 0; i < 32; i++) {
+      const bars = document.createElement('div');
+      bars.className = 'sound-bar';
+      bars.style.setProperty(
+        '--bg-start',
+        `hsl(${(i * 360) / 32}, 100%, 50%, 0.5)`
+      );
+      bars.style.setProperty(
+        '--bg-end',
+        `hsl(${((i + 1) * 360) / 32}, 100%, 50%, 0.5)`
+      );
+      document.querySelector('.container').appendChild(bars);
+    }
+
+    const audio = document.querySelector('audio');
+    const ring = document.querySelector('.ring');
+    let audioContext, analyser, dataArray;
     document.querySelectorAll('.sound-bar').forEach((bar) => {
       bar.style.setProperty('--r', '-' + Math.random() + 's');
+    });
+
+    audio.addEventListener('play', () => {
+      if (!audioContext) {
+        audioContext = new AudioContext().createMediaElementSource(
+          document.querySelector('audio')
+        );
+        analyser = audioContext.context.createAnalyser();
+        audioContext.connect(analyser);
+        analyser.connect(audioContext.context.destination);
+
+        analyser.fftSize = 64;
+
+        const bufferLen = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLen);
+      }
+      requestAni();
+    });
+
+    function requestAni() {
+      if (!analyser || audio.paused || audio.ended) return;
+      requestAnimationFrame(requestAni);
+      analyser.getByteFrequencyData(dataArray);
+
+      document.querySelectorAll('.sound-bar').forEach((bar, i) => {
+        const value = dataArray[i] / 255;
+        bar.style.setProperty('--bar-height', value * 200 + 'px');
+      });
+    }
+
+    let startTime = 0;
+    let timer;
+    document.querySelector('.ring').addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        timer = setInterval(() => {
+          ring.style.setProperty('transform', `rotate(${startTime}deg)`);
+          startTime += 1;
+        }, 100);
+      } else {
+        audio.pause();
+        timer && clearInterval(timer);
+      }
     });
   </script>
 </html>
