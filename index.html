@@ -9,8 +9,13 @@
   <body>
     <div class="container">
       <div class="ring"></div>
+      <div class="duration">
+        <div class="duration-bar"></div>
+        <span class="duration-text"></span>
+      </div>
     </div>
     <div class="mask"></div>
+
     <audio src="./rule.mp3" class="player" controls></audio>
   </body>
 
@@ -18,6 +23,14 @@
     const barCount = 64;
     const fftSize = 2048;
     const step = fftSize / 2 / barCount;
+    const audio = document.querySelector('audio');
+    const ring = document.querySelector('.ring');
+    const container = document.querySelector('.container');
+    const mask = document.querySelector('.mask');
+    const durationBar = document.querySelector('.duration-bar');
+    const durationText = document.querySelector('.duration-text');
+
+    let duration = 0;
 
     for (let i = 0; i < barCount; i++) {
       const barsContainer = document.createElement('div');
@@ -37,18 +50,11 @@
         '--bg-end',
         `hsl(${((i + 1) * 300) / barCount}, 100%, 50%, 0.8)`
       );
-      bars.style.setProperty(
-        '--box-shadow',
-        `0 0 15px hsl(${(i * 300) / barCount}, 100%, 50%)`
-      );
-      document.querySelector('.container').appendChild(barsContainer);
-    }
 
-    const audio = document.querySelector('audio');
-    const ring = document.querySelector('.ring');
-    const container = document.querySelector('.container');
-    const mask = document.querySelector('.mask');
+      container.appendChild(barsContainer);
+    }
     const bars = document.querySelectorAll('.sound-bar');
+
     let audioContext, analyser, dataArray;
     document.querySelectorAll('.sound-bar').forEach((bar) => {
       bar.style.setProperty('--r', '-' + Math.random() + 's');
@@ -56,6 +62,10 @@
 
     audio.addEventListener('loadedmetadata', () => {
       // metadata loaded
+      duration = audio.duration;
+      durationText.innerText = new Date(duration * 1000)
+        .toISOString()
+        .substr(14, 5);
     });
 
     audio.addEventListener('play', () => {
