@@ -18,50 +18,36 @@ body {
   gap: 5px;
 }
 
-.sound-bar {
+.sound-bar-container {
+  position: relative;
   height: 100%;
-  width: calc(100% / 32);
+  width: calc(100% / 64);
   position: relative;
   pointer-events: none;
 }
 
-.sound-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  height: var(--bar-height, 2px);
-  width: 100%;
-  background:
-    linear-gradient(to right, var(--bg-start), var(--bg-end)),
-    linear-gradient(to bottom, transparent, #fff);
-  border-radius: 0 0 2px 2px;
-
-  opacity: 0.1;
-
-  transform-origin: top;
-
-  filter: drop-shadow(0 0 5px var(--bg-start));
-
-  transition: height 0.1s ease-out;
-  will-change: height;
-}
-
-.sound-bar::after {
-  content: '';
+.sound-bar-box {
   position: absolute;
   bottom: 0;
-  height: var(--bar-height, 2px);
+  left: 0;
+  height: 300px;
   width: 100%;
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+  /* border: 1px solid #fff; */
+}
+
+.sound-bar {
+  position: absolute;
+  bottom: 0;
+  height: 90%;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
   background:
     linear-gradient(to right, var(--bg-start), var(--bg-end)),
-    linear-gradient(to top, transparent, #fff);
-  border-radius: 2px 2px 0 0;
-
-  transform-origin: bottom;
-
-  filter: drop-shadow(0 0 5px var(--bg-start));
-  transition: height 0.1s ease-out;
-  will-change: height;
+    linear-gradient(to bottom, #ffffff, transparent);
+  box-shadow: var(--box-shadow);
+  transform: translateY(298px);
 }
 
 .container {
@@ -73,9 +59,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #19191980;
+  background: #19191990;
   backdrop-filter: blur(50px);
   z-index: 2;
+  gap: 1px;
 }
 .mask {
   position: absolute;
@@ -124,23 +111,6 @@ body {
 .player {
   width: 0;
   height: 0;
-}
-
-@keyframes wave {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(2);
-    opacity: 0;
-  }
-
-  100% {
-    transform: scale(3);
-    opacity: 0;
-  }
 }
 
 @keyframes rotate {

@@ -15,24 +15,40 @@
   </body>
 
   <script>
-    for (let i = 0; i < 32; i++) {
+    const barCount = 64;
+    const fftSize = 2048;
+    const step = fftSize / 2 / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      const barsContainer = document.createElement('div');
+      barsContainer.className = 'sound-bar-container';
+      const barsBox = document.createElement('div');
+      barsBox.className = 'sound-bar-box';
+      barsContainer.appendChild(barsBox);
       const bars = document.createElement('div');
       bars.className = 'sound-bar';
+      barsBox.appendChild(bars);
+
       bars.style.setProperty(
         '--bg-start',
-        `hsl(${(i * 360) / 32}, 100%, 50%, 0.5)`
+        `hsl(${(i * 300) / barCount}, 100%, 50%, 0.8)`
       );
       bars.style.setProperty(
         '--bg-end',
-        `hsl(${((i + 1) * 360) / 32}, 100%, 50%, 0.5)`
+        `hsl(${((i + 1) * 300) / barCount}, 100%, 50%, 0.8)`
       );
-      document.querySelector('.container').appendChild(bars);
+      bars.style.setProperty(
+        '--box-shadow',
+        `0 0 15px hsl(${(i * 300) / barCount}, 100%, 50%)`
+      );
+      document.querySelector('.container').appendChild(barsContainer);
     }
 
     const audio = document.querySelector('audio');
     const ring = document.querySelector('.ring');
     const container = document.querySelector('.container');
     const mask = document.querySelector('.mask');
+    const bars = document.querySelectorAll('.sound-bar');
     let audioContext, analyser, dataArray;
     document.querySelectorAll('.sound-bar').forEach((bar) => {
       bar.style.setProperty('--r', '-' + Math.random() + 's');
@@ -51,7 +67,7 @@
         audioContext.connect(analyser);
         analyser.connect(audioContext.context.destination);
 
-        analyser.fftSize = 2048;
+        analyser.fftSize = fftSize;
 
         const bufferLen = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLen);
@@ -83,25 +99,25 @@
       mask.style.setProperty('opacity', 1);
     });
 
-    // 1024 / 32 = 32, 每个bar占16个频率数据
+    // 1024 / barCount
     function requestAni() {
       if (!analyser || audio.paused || audio.ended) return;
       requestAnimationFrame(requestAni);
       analyser.getByteFrequencyData(dataArray);
 
-      document.querySelectorAll('.sound-bar').forEach((bar, i) => {
+      bars.forEach((bar, i) => {
         let value = 0;
-        for (let j = 0; j < 32; j++) {
-          value += dataArray[j + i * 32];
+        for (let j = 0; j < step; j++) {
+          value += dataArray[j + i * step];
         }
-        value /= 32 * 255;
+        value /= step * 255;
 
         const height = value * 300;
         if (height < 2) {
-          bar.style.setProperty('--bar-height', '2px');
+          bar.style.setProperty('transform', 'translateY(298px)');
           return;
         }
-        bar.style.setProperty('--bar-height', height + 'px');
+        bar.style.setProperty('transform', `translateY(${300 - height}px)`);
       });
     }
 
