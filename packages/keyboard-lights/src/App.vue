@@ -31,8 +31,8 @@ onMounted(() => {
         const spans = document.querySelectorAll('.result span');
         if (spans.length > 10) {
           const firstSpan = spans[0];
-          gsap.to(firstSpan, {
-            duration: 0.5,
+          tl.to(firstSpan, {
+            duration: 0.1,
             opacity: 0,
             scale: 0.5,
             ease: 'power2.out',
@@ -56,8 +56,8 @@ onMounted(() => {
             (spanRect.top + spanRect.height / 2)
         };
 
-        gsap.from(span, {
-          duration: 1,
+        tl.from(span, {
+          duration: 0.1,
           x: coordinates.x,
           y: coordinates.y,
           opacity: 0,
