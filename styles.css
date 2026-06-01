@@ -90,6 +90,7 @@ body {
   background-image: url(./image.png);
   /* animation: rotate 15s linear infinite; */
   transition: transform 0.1s linear;
+  transform: translateY(-20%);
 }
 
 .ring::before {
@@ -97,20 +98,8 @@ body {
   position: absolute;
   top: -2px;
   left: -2px;
-  height: 304px;
-  width: 304px;
-  border-radius: 50%;
-  z-index: -1;
-  /* filter: drop-shadow(0 0 10px #fff); */
-}
-
-.ring::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  height: 304px;
-  width: 304px;
+  height: inherit;
+  width: inherit;
   border: 2px solid #ffffff80;
   border-radius: 50%;
   z-index: -1;

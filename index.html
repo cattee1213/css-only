@@ -35,6 +35,10 @@
       bar.style.setProperty('--r', '-' + Math.random() + 's');
     });
 
+    audio.addEventListener('loadedmetadata', () => {
+      // metadata loaded
+    });
+
     audio.addEventListener('play', () => {
       if (!audioContext) {
         audioContext = new AudioContext().createMediaElementSource(
@@ -69,7 +73,10 @@
       if (audio.paused) {
         audio.play();
         timer = setInterval(() => {
-          ring.style.setProperty('transform', `rotate(${startTime}deg)`);
+          ring.style.setProperty(
+            'transform',
+            `translateY(-20%) rotate(${startTime}deg)`
+          );
           startTime += 1;
         }, 100);
       } else {
