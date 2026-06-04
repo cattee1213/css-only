@@ -9,6 +9,7 @@
   <body>
     <div class="container">
       <div class="ring"></div>
+      <div class="ring-process"></div>
       <div class="duration">
         <div class="duration-bar"></div>
         <span class="duration-text"></span>
@@ -20,7 +21,7 @@
   </body>
 
   <script>
-    const barCount = 64;
+    const barCount = 32;
     const fftSize = 2048;
     const step = fftSize / 2 / barCount;
     const audio = document.querySelector('audio');
@@ -29,8 +30,11 @@
     const mask = document.querySelector('.mask');
     const durationBar = document.querySelector('.duration-bar');
     const durationText = document.querySelector('.duration-text');
+    const ringProcess = document.querySelector('.ring-process');
 
     let duration = 0;
+    let durationPersent = -100;
+    let ringProcessDegree = 0; // max 360
 
     for (let i = 0; i < barCount; i++) {
       const barsContainer = document.createElement('div');
@@ -56,8 +60,8 @@
     const bars = document.querySelectorAll('.sound-bar');
 
     let audioContext, analyser, dataArray;
-    document.querySelectorAll('.sound-bar').forEach((bar) => {
-      bar.style.setProperty('--r', '-' + Math.random() + 's');
+    document.querySelectorAll('.sound-bar-container').forEach((bar) => {
+      bar.style.setProperty('--w', 100 / barCount + '%');
     });
 
     audio.addEventListener('loadedmetadata', () => {
@@ -107,6 +111,15 @@
         ring.classList.add('paused');
       }
       mask.style.setProperty('opacity', 1);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      // 实时获取播放进度
+      const curDuration = audio.currentTime;
+      durationPersent = Number(curDuration / duration) * 100;
+      durationBar.style.setProperty('--x', -100 + durationPersent + '%');
+      ringProcessDegree = durationPersent * 3.6 + 'deg';
+      ringProcess.style.setProperty('--r', ringProcessDegree);
     });
 
     // 1024 / barCount
