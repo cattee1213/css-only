@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <audio src="./hate.mp3"></audio>
+    <div class="mask"></div>
+    <div class="frame"></div>
+    <div class="container">
+      <div class="ring-box">
+        <div class="ring"></div>
+        <div class="ring-process"></div>
+      </div>
+
+      <div class="lrc"></div>
+    </div>
+    <div class="bars-box"></div>
+  </body>
+
+  <script>
+    const audioEl = document.querySelector('audio');
+    const barsBoxEl = document.querySelector('.bars-box');
+    const maskEl = document.querySelector('.mask');
+    const ringBoxEl = document.querySelector('.ring-box');
+    const ringEl = document.querySelector('.ring');
+    const ringProcessEl = document.querySelector('.ring-process');
+    const lrcEl = document.querySelector('.lrc');
+    const barCount = 32;
+    const fftSize = 2048;
+    const step = fftSize / 2 / barCount;
+    let barsEl = null;
+    let audioContext = null;
+    let audioAnalyser = null;
+    let duration = 0;
+    let hasInitAudioGraph = false;
+    let lrc = [];
+
+    window.onload = async () => {
+      let count = 0;
+      while (count < barCount) {
+        const barEl = document.createElement('div');
+        barEl.classList.add('bar');
+        barEl.style.setProperty('--w', `${100 / barCount}%`);
+        barEl.style.setProperty(
+          '--bg',
+          `linear-gradient(hsla(0,0%,${(100 / barCount) * count}%,30% ),hsla(0,0%,${(100 / barCount) * (count + 1)}%,30% ))
+          ,linear-gradient(to bottom,transparent,transparent,#ffffff90)
+          `
+        );
+        barsBoxEl.appendChild(barEl);
+        count++;
+      }
+      barsEl = document.querySelectorAll('.bar');
+      lrc = await lrcBuilder();
+    };
+
+    audioEl.addEventListener('loadedmetadata', () => {
+      duration = audioEl.duration; // s
+    });
+
+    audioEl.addEventListener('playing', () => {
+      ringEl.classList.add('playing');
+      maskEl.style.setProperty('background-color', '#19191970');
+
+      requestAni();
+    });
+
+    audioEl.addEventListener('ended', () => {
+      ringEl.classList.remove('playing');
+      maskEl.style.setProperty('background-color', '#191919');
+    });
+
+    audioEl.addEventListener('pause', () => {
+      ringEl.classList.remove('playing');
+    });
+
+    audioEl.addEventListener('timeupdate', () => {
+      const percentage = (audioEl.currentTime / duration) * 100;
+      const degrees = `${percentage * 3.6}deg`;
+      ringProcessEl.style.setProperty('--r', degrees);
+      syncLrc(audioEl.currentTime);
+    });
+
+    ringEl.addEventListener('click', () => {
+      if (!audioEl.ended && !audioEl.paused) {
+        audioEl.pause();
+      } else {
+        !hasInitAudioGraph && initAudioGraph();
+        audioEl.play();
+      }
+    });
+
+    function requestAni() {
+      if (!audioAnalyser || audioEl.paused || audioEl.ended) {
+        return false;
+      }
+
+      requestAnimationFrame(requestAni);
+      const bufferLen = audioAnalyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLen);
+      audioAnalyser.getByteFrequencyData(dataArray);
+
+      barsEl.forEach((bar, index) => {
+        let averageVal = 0;
+        for (let i = 1; i < step; i++) {
+          averageVal += dataArray[i + index * (step - 8)];
+        }
+        averageVal /= step;
+        bar.style.setProperty(
+          'transform',
+          `translateY(-${300 - averageVal}px)`
+        );
+      });
+    }
+
+    function initAudioGraph() {
+      if (!audioContext) {
+        audioContext = new AudioContext().createMediaElementSource(audioEl);
+      }
+      audioAnalyser = audioContext.context.createAnalyser();
+      audioContext.connect(audioAnalyser);
+      audioAnalyser.connect(audioContext.context.destination);
+      audioAnalyser.fftSize = fftSize;
+      hasInitAudioGraph = true;
+    }
+
+    async function lrcBuilder() {
+      const response = await fetch('./hate.lrc');
+      const lrcText = await response.text();
+
+      const lrcArray = lrcText.split('\r\n');
+      const lrcObj = [];
+      for (let i = 0; i < lrcArray.length; i++) {
+        const lrcSubArray = lrcArray[i].split(']');
+        let time = lrcSubArray[0].substring(1, lrcSubArray[0].length);
+        let min = time.split(':')[0];
+        let sec = time.substring(0, time.length - 3).split(':')[1];
+        let mil = time.split('.')[1];
+
+        lrcObj.push({
+          time: Number(min) * 60 + Number(sec) + Number(mil) / 100,
+          text: lrcSubArray[1]
+        });
+      }
+
+      return lrcObj;
+    }
+
+    let index = 0;
+    async function syncLrc(songCurrentTime) {
+      if (songCurrentTime.toFixed(2) >= lrc[index]['time']) {
+        document.querySelectorAll('.lrc-span').forEach((span) => {
+          span.remove();
+        });
+        console.log(songCurrentTime.toFixed(2) + '：' + lrc[index]['text']);
+        if (lrc[index]['text'].trim() !== '') {
+          const spans = lrc[index]['text'].trim().split('');
+          spans.forEach((span) => {
+            const spanEl = document.createElement('span');
+            spanEl.classList.add('lrc-span');
+            spanEl.style.setProperty('--d', Math.random() + 's');
+            spanEl.style.setProperty(
+              '--x',
+              Math.round((Math.random() - 0.5) * 100) + 'px'
+            );
+            spanEl.style.setProperty(
+              '--y',
+              Math.round((Math.random() - 0.5) * 100) + 'px'
+            );
+            spanEl.innerText = span;
+            lrcEl.appendChild(spanEl);
+          });
+        }
+        index++;
+      }
+    }
+  </script>
+</html>
