@@ -7,18 +7,20 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <audio src="./hate.mp3"></audio>
+    <audio>
+      <source src="./assets/hate.mp3"></source>
+    </audio>
     <div class="mask"></div>
     <div class="frame"></div>
     <div class="container">
       <div class="ring-box">
         <div class="ring"></div>
-        <div class="ring-process"></div>
       </div>
 
       <div class="lrc"></div>
     </div>
     <div class="bars-box"></div>
+    <div class="process-bar" style="--x: -100%"></div>
   </body>
 
   <script>
@@ -27,8 +29,8 @@
     const maskEl = document.querySelector('.mask');
     const ringBoxEl = document.querySelector('.ring-box');
     const ringEl = document.querySelector('.ring');
-    const ringProcessEl = document.querySelector('.ring-process');
     const lrcEl = document.querySelector('.lrc');
+    const processbarEl = document.querySelector('.process-bar');
     const barCount = 32;
     const fftSize = 2048;
     const step = fftSize / 2 / barCount;
@@ -81,7 +83,8 @@
     audioEl.addEventListener('timeupdate', () => {
       const percentage = (audioEl.currentTime / duration) * 100;
       const degrees = `${percentage * 3.6}deg`;
-      ringProcessEl.style.setProperty('--r', degrees);
+      console.log(percentage);
+      processbarEl.style.setProperty('--x', -100 + percentage + '%');
       syncLrc(audioEl.currentTime);
     });
 
@@ -129,7 +132,7 @@
     }
 
     async function lrcBuilder() {
-      const response = await fetch('./hate.lrc');
+      const response = await fetch('./assets/hate.lrc');
       const lrcText = await response.text();
 
       const lrcArray = lrcText.split('\r\n');
