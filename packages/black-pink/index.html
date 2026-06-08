@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="box"></div>
+  </body>
+
+  <script>
+    const boxEl = document.querySelector('.box');
+    const row = 30;
+    const col = 60;
+
+    for (let r = 0; r < row; r++) {
+      for (let c = 0; c < col; c++) {
+        const sqEl = document.createElement('div');
+        sqEl.classList.add('sq');
+        sqEl.style.setProperty('--i', r * col + c);
+        sqEl.style.setProperty('--x', c * 10 + 'px');
+        sqEl.style.setProperty('--y', r * 10 + 'px');
+        boxEl.appendChild(sqEl);
+      }
+    }
+
+    const sqEls = document.querySelectorAll('.sq');
+
+    boxEl.addEventListener('mousemove', (event) => {
+      const sqEl = event.target.closest('.sq');
+      if (!sqEl) return;
+
+      const coordinate = {
+        i: Number(sqEl.style.getPropertyValue('--i')),
+        x: sqEl.style.getPropertyValue('--x'),
+        y: sqEl.style.getPropertyValue('--y')
+      };
+      sqEl.style.setProperty('--r', Math.random() * 10 + 'deg');
+      sqEl.style.setProperty(
+        '--ty',
+        Number(coordinate.y.substring(0, coordinate.y.length - 2)) + 300 + 'px'
+      );
+      sqEl.style.setProperty('--z', 1);
+
+      // 计算在第几行第几列
+      const r = Math.floor(coordinate.i / col);
+      const c = coordinate.i % col;
+      // 找到同一列其他行
+      // 找到比自己高和低的的行
+      for (let i = 0; i < row; i++) {
+        if (i === r) continue;
+        const sqElSide = sqEls[i * col + c];
+
+        sqElSide.style.setProperty('--r', Math.random() * 10 + 'deg');
+        let ty_bottom =
+          Number(coordinate.y.substring(0, coordinate.y.length - 2)) +
+          300 +
+          'px';
+        let ty_top =
+          Number(coordinate.y.substring(0, coordinate.y.length - 2)) * -1 -
+          300 +
+          'px';
+        if (i < r) {
+          sqElSide.style.setProperty('--ty', ty_top);
+        } else {
+          sqElSide.style.setProperty('--ty', ty_bottom);
+        }
+
+        sqElSide.style.setProperty('--z', 1);
+      }
+    });
+  </script>
+</html>
