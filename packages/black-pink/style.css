@@ -13,33 +13,139 @@ body {
 }
 
 .box {
-  height: 300px;
-  width: 600px;
-  /* border: 1px solid blue; */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 100px;
-  color: transparent;
-  font-weight: 900;
-  -webkit-text-stroke: 4px pink;
+  width: 100vw;
+  height: 100vh;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 22%, #ff2f7b22, transparent 30%),
+    radial-gradient(circle at 82% 74%, #00e9ff22, transparent 28%), #090909;
 }
 
-.sq {
-  width: 10px;
-  height: 10px;
+.mask {
   position: absolute;
-  top: var(--y);
-  left: var(--x);
-  /* border: 1px red solid; */
-  background-image: url(./backpink.jpg);
-  background-position: calc(var(--x) * -1) calc(var(--y) * -1);
-  background-size: 600px 300px;
-  background-repeat: no-repeat;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 18%, #ff4b8f26, transparent 34%),
+    radial-gradient(circle at 78% 76%, #05e0ff22, transparent 30%),
+    linear-gradient(
+      to bottom,
+      #050505,
+      #10101090,
+      #05050520,
+      #05050520,
+      #10101090,
+      #050505
+    ),
+    linear-gradient(
+      to right,
+      #050505,
+      #10101090,
+      #05050520,
+      #05050520,
+      #10101090,
+      #050505
+    );
+  pointer-events: none;
+}
 
-  transform: translateY(var(--ty));
-  transition: transform 1s ease-out;
-  z-index: var(--z);
+.img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  will-change: transform, filter, opacity;
+}
+
+.img1 {
+  clip-path: inset(0 0 80% 0);
+}
+.img2 {
+  clip-path: inset(20% 0 60% 0);
+}
+.img3 {
+  clip-path: inset(40% 0 40% 0);
+}
+.img4 {
+  clip-path: inset(60% 0 20% 0);
+}
+.img5 {
+  clip-path: inset(80% 0 0 0);
+}
+.shaded {
+  filter: var(
+    --rest-filter,
+    saturate(0.78) contrast(1.14) brightness(0.82) hue-rotate(-6deg)
+  );
+  opacity: 0.86;
+}
+
+.blind {
+  animation: blind 1.1s var(--delay, 0ms) steps(1, end) 1 both;
+}
+
+@keyframes blind {
+  0%,
+  12%,
+  100% {
+    transform: translate3d(0, 0, 0) skewX(0deg) scaleX(1);
+    filter: var(
+      --rest-filter,
+      saturate(0.78) contrast(1.14) brightness(0.82) hue-rotate(-6deg)
+    );
+    opacity: 0.86;
+  }
+  16% {
+    transform: translate3d(var(--tx1), var(--ty1), 0) skewX(var(--tsx1))
+      scaleX(1.02);
+    filter: var(--fx1-filter, saturate(1.7) brightness(1.05) contrast(1.18));
+    opacity: 1;
+  }
+  28% {
+    transform: translate3d(var(--tx2), var(--ty2), 0) skewX(var(--tsx2))
+      scaleX(0.98);
+    filter: var(--fx2-filter, saturate(1.9) brightness(1.08) contrast(1.22));
+    opacity: 0.98;
+  }
+  40% {
+    transform: translate3d(var(--tx3), var(--ty3), 0) skewX(var(--tsx3))
+      scaleX(1.01);
+    filter: var(--fx3-filter, saturate(1.8) brightness(1.04) contrast(1.16));
+    opacity: 1;
+  }
+  52% {
+    transform: translate3d(calc(var(--tx2) * -1), 0, 0)
+      skewX(calc(var(--tsx2) * -1)) scaleX(1.03);
+    filter: var(--fx2-filter, saturate(1.9) brightness(1.08) contrast(1.22));
+    opacity: 0.96;
+  }
+  64% {
+    transform: translate3d(calc(var(--tx1) * 0.6), var(--ty2), 0)
+      skewX(calc(var(--tsx1) * -1)) scaleX(0.99);
+    filter: var(--fx1-filter, saturate(1.7) brightness(1.05) contrast(1.18));
+    opacity: 1;
+  }
+  76% {
+    transform: translate3d(calc(var(--tx3) * -1), calc(var(--ty3) * -1), 0)
+      skewX(calc(var(--tsx3) * -1)) scaleX(1.02);
+    filter: var(--fx3-filter, saturate(1.8) brightness(1.04) contrast(1.16));
+    opacity: 0.98;
+  }
+  88%,
+  100% {
+    transform: translate3d(0, 0, 0) skewX(0deg) scaleX(1);
+    filter: var(
+      --rest-filter,
+      saturate(0.78) contrast(1.14) brightness(0.82) hue-rotate(-6deg)
+    );
+    opacity: 0.86;
+  }
 }

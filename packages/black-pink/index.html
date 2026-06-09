@@ -4,73 +4,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="box"></div>
+    <div class="box">
+      <img src="./image.png" alt="" class="img img1 shaded" />
+      <img src="./image.png" alt="" class="img img2 shaded" />
+      <img src="./image.png" alt="" class="img img3 shaded" />
+      <img src="./image.png" alt="" class="img img4 shaded" />
+      <img src="./image.png" alt="" class="img img5 shaded" />
+
+      <div class="mask"></div>
+    </div>
   </body>
 
   <script>
-    const boxEl = document.querySelector('.box');
-    const row = 30;
-    const col = 60;
+    const shadedEls = [...document.querySelectorAll('.shaded')];
+    const durationMs = 1100;
+    const maxDelayMs = 120;
+    const gapMs = 1380;
+    const restFilters = [
+      'saturate(0.78) contrast(1.14) brightness(0.82) hue-rotate(-8deg)',
+      'saturate(0.82) contrast(1.16) brightness(0.8) hue-rotate(6deg)',
+      'saturate(0.76) contrast(1.12) brightness(0.84) hue-rotate(-18deg)'
+    ];
+    const flashFilters = [
+      'saturate(1.85) contrast(1.24) brightness(1.08) hue-rotate(-26deg)',
+      'saturate(2.1) contrast(1.26) brightness(1.12) hue-rotate(18deg)',
+      'saturate(1.7) contrast(1.2) brightness(1.06) hue-rotate(36deg)'
+    ];
 
-    for (let r = 0; r < row; r++) {
-      for (let c = 0; c < col; c++) {
-        const sqEl = document.createElement('div');
-        sqEl.classList.add('sq');
-        sqEl.style.setProperty('--i', r * col + c);
-        sqEl.style.setProperty('--x', c * 10 + 'px');
-        sqEl.style.setProperty('--y', r * 10 + 'px');
-        boxEl.appendChild(sqEl);
-      }
+    function randomOffset(index) {
+      const amplitude = 16 + (index % 4) * 9;
+      return `${(Math.random() - 0.5) * amplitude * 2}px`;
     }
 
-    const sqEls = document.querySelectorAll('.sq');
+    function randomY(index) {
+      const amplitude = index % 3 === 0 ? 8 : 5;
+      return `${(Math.random() - 0.5) * amplitude * 2}px`;
+    }
 
-    boxEl.addEventListener('mousemove', (event) => {
-      const sqEl = event.target.closest('.sq');
-      if (!sqEl) return;
+    function randomSkew(index) {
+      const amplitude = 6 + (index % 3) * 5;
+      return `${(Math.random() - 0.5) * amplitude * 2}deg`;
+    }
 
-      const coordinate = {
-        i: Number(sqEl.style.getPropertyValue('--i')),
-        x: sqEl.style.getPropertyValue('--x'),
-        y: sqEl.style.getPropertyValue('--y')
-      };
-      sqEl.style.setProperty('--r', Math.random() * 10 + 'deg');
-      sqEl.style.setProperty(
-        '--ty',
-        Number(coordinate.y.substring(0, coordinate.y.length - 2)) + 300 + 'px'
-      );
-      sqEl.style.setProperty('--z', 1);
+    function triggerBlind() {
+      let longestDelay = 0;
 
-      // 计算在第几行第几列
-      const r = Math.floor(coordinate.i / col);
-      const c = coordinate.i % col;
-      // 找到同一列其他行
-      // 找到比自己高和低的的行
-      for (let i = 0; i < row; i++) {
-        if (i === r) continue;
-        const sqElSide = sqEls[i * col + c];
+      shadedEls.forEach((el, index) => {
+        const phaseOffset = (index % 3) * 70;
+        const delayMs = phaseOffset + Math.random() * maxDelayMs;
+        const restIndex = index % restFilters.length;
+        const flashIndex = index % flashFilters.length;
 
-        sqElSide.style.setProperty('--r', Math.random() * 10 + 'deg');
-        let ty_bottom =
-          Number(coordinate.y.substring(0, coordinate.y.length - 2)) +
-          300 +
-          'px';
-        let ty_top =
-          Number(coordinate.y.substring(0, coordinate.y.length - 2)) * -1 -
-          300 +
-          'px';
-        if (i < r) {
-          sqElSide.style.setProperty('--ty', ty_top);
-        } else {
-          sqElSide.style.setProperty('--ty', ty_bottom);
-        }
+        longestDelay = Math.max(longestDelay, delayMs);
 
-        sqElSide.style.setProperty('--z', 1);
-      }
-    });
+        el.classList.remove('blind');
+        void el.offsetWidth;
+
+        el.style.setProperty('--delay', `${delayMs}ms`);
+        el.style.setProperty('--tx1', randomOffset(index));
+        el.style.setProperty('--tx2', randomOffset(index + 1));
+        el.style.setProperty('--tx3', randomOffset(index + 2));
+        el.style.setProperty('--ty1', randomY(index));
+        el.style.setProperty('--ty2', randomY(index + 1));
+        el.style.setProperty('--ty3', randomY(index + 2));
+        el.style.setProperty('--tsx1', randomSkew(index));
+        el.style.setProperty('--tsx2', randomSkew(index + 1));
+        el.style.setProperty('--tsx3', randomSkew(index + 2));
+        el.style.setProperty('--rest-filter', restFilters[restIndex]);
+        el.style.setProperty('--fx1-filter', flashFilters[flashIndex]);
+        el.style.setProperty(
+          '--fx2-filter',
+          flashFilters[(flashIndex + 1) % flashFilters.length]
+        );
+        el.style.setProperty(
+          '--fx3-filter',
+          flashFilters[(flashIndex + 2) % flashFilters.length]
+        );
+
+        el.classList.add('blind');
+      });
+
+      window.setTimeout(() => {
+        shadedEls.forEach((el) => {
+          el.classList.remove('blind');
+        });
+
+        window.setTimeout(triggerBlind, gapMs);
+      }, durationMs + longestDelay);
+    }
+
+    triggerBlind();
   </script>
 </html>
