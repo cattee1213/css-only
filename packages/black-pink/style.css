@@ -1,0 +1,35 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: #191919;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.box {
+  --box-width: 400px;
+  --box-height: 600px;
+  height: var(--box-height);
+  width: var(--box-width);
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.piece {
+  width: 40px;
+  height: 60px;
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  background-image: url(./image.png);
+  background-size: var(--box-width) var(--box-height);
+  background-repeat: no-repeat;
+  background-position: var(--bpx) var(--bpy);
+}
