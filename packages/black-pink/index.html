@@ -3,130 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BLACKPINK Fragment Poster</title>
+    <title>Document</title>
     <link rel="stylesheet" href="./style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
   </head>
   <body>
-    <main class="scene">
-      <div class="scene-noise" aria-hidden="true"></div>
-      <header class="hero">
-        <p class="eyebrow">CSS Motion Poster</p>
-        <h1 class="title">
-          <span class="title-black">BLACK</span>
-          <span class="title-pink">PINK</span>
-        </h1>
-        <p class="subtitle">Fragmented reveal tuned for vertical capture</p>
-      </header>
-
-      <section class="poster-shell" aria-label="BLACKPINK fragmented poster">
-        <div class="poster-glow" aria-hidden="true"></div>
-        <div class="box" aria-hidden="true"></div>
-        <div class="poster-scan" aria-hidden="true"></div>
-      </section>
-
-      <footer class="footer-copy">
-        <span>Auto loop</span>
-        <span>Wave burst</span>
-        <span>Vertical safe frame</span>
-      </footer>
-    </main>
-
-    <script>
-      const boxEl = document.querySelector('.box');
-      const sceneEl = document.querySelector('.scene');
-
-      const rows = 10;
-      const cols = 10;
-      const pieceWidth = 40;
-      const pieceHeight = 60;
-      const centerRow = (rows - 1) / 2;
-      const centerCol = (cols - 1) / 2;
-      const maxDistance = Math.hypot(centerRow, centerCol);
-      const pieces = [];
-
-      const randomBetween = (min, max) => min + Math.random() * (max - min);
-
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const pieceEl = document.createElement('div');
-          const dy = row - centerRow;
-          const dx = col - centerCol;
-          const distance = Math.hypot(dy, dx);
-          const normalized = distance / maxDistance;
-          const angle = Math.atan2(dy || 0.001, dx || 0.001);
-
-          pieceEl.className = 'piece';
-          pieceEl.style.setProperty('--top', `${row * pieceHeight}px`);
-          pieceEl.style.setProperty('--left', `${col * pieceWidth}px`);
-          pieceEl.style.setProperty('--bpx', `${col * -pieceWidth}px`);
-          pieceEl.style.setProperty('--bpy', `${row * -pieceHeight}px`);
-          pieceEl.style.setProperty('--intro-delay', `${normalized * 420}ms`);
-          boxEl.appendChild(pieceEl);
-
-          pieces.push({
-            el: pieceEl,
-            angle,
-            distance,
-            normalized
-          });
-        }
-      }
-
-      function scatter() {
-        sceneEl.classList.add('is-burst');
-
-        for (const piece of pieces) {
-          const radialPush = 55 + piece.normalized * 120;
-          const driftX = Math.cos(piece.angle) * radialPush + randomBetween(-36, 36);
-          const driftY = Math.sin(piece.angle) * radialPush + randomBetween(-54, 54);
-          const depth = 70 + piece.normalized * 190 + randomBetween(-25, 30);
-          const rotateX = randomBetween(-130, 130);
-          const rotateY = randomBetween(-180, 180);
-          const rotateZ = randomBetween(-70, 70);
-          const delay = piece.normalized * 260;
-
-          piece.el.style.setProperty('--delay', `${delay}ms`);
-          piece.el.style.setProperty('--tx', `${driftX.toFixed(2)}px`);
-          piece.el.style.setProperty('--ty', `${driftY.toFixed(2)}px`);
-          piece.el.style.setProperty('--tz', `${depth.toFixed(2)}px`);
-          piece.el.style.setProperty('--rx', `${rotateX.toFixed(2)}deg`);
-          piece.el.style.setProperty('--ry', `${rotateY.toFixed(2)}deg`);
-          piece.el.style.setProperty('--rz', `${rotateZ.toFixed(2)}deg`);
-          piece.el.style.setProperty('--scale', `${(0.92 + piece.normalized * 0.18).toFixed(3)}`);
-          piece.el.style.setProperty('--opacity', `${(0.54 + (1 - piece.normalized) * 0.32).toFixed(3)}`);
-          piece.el.style.setProperty('--saturate', `${(1.05 + piece.normalized * 0.4).toFixed(3)}`);
-          piece.el.style.setProperty('--brightness', `${(1.02 + piece.normalized * 0.18).toFixed(3)}`);
-        }
-      }
-
-      function settle() {
-        sceneEl.classList.remove('is-burst');
-
-        for (const piece of pieces) {
-          const delay = (1 - piece.normalized) * 180;
-
-          piece.el.style.setProperty('--delay', `${delay}ms`);
-          piece.el.style.setProperty('--tx', '0px');
-          piece.el.style.setProperty('--ty', '0px');
-          piece.el.style.setProperty('--tz', '0px');
-          piece.el.style.setProperty('--rx', '0deg');
-          piece.el.style.setProperty('--ry', '0deg');
-          piece.el.style.setProperty('--rz', '0deg');
-          piece.el.style.setProperty('--scale', '1');
-          piece.el.style.setProperty('--opacity', '1');
-          piece.el.style.setProperty('--saturate', '1');
-          piece.el.style.setProperty('--brightness', '1');
-        }
-      }
-
-      function cycle() {
-        scatter();
-        window.setTimeout(settle, 2200);
-        window.setTimeout(cycle, 5200);
-      }
-
-      settle();
-      window.setTimeout(cycle, 900);
-    </script>
+    <div class="box"></div>
   </body>
+  <script>
+    const { animate } = anime;
+
+    const boxEl = document.querySelector('.box');
+
+    // 40 * 60
+    const row = 10;
+    const col = 10;
+    for (let r = 0; r < row; r++) {
+      for (let c = 0; c < col; c++) {
+        const pieceEl = document.createElement('div');
+        pieceEl.classList.add('piece');
+        pieceEl.style.setProperty('--top', r * 60 + 'px');
+        pieceEl.style.setProperty('--left', c * 40 + 'px');
+        pieceEl.style.setProperty('--bpx', c * -40 + 'px');
+        pieceEl.style.setProperty('--bpy', r * -60 + 'px');
+        boxEl.appendChild(pieceEl);
+      }
+    }
+    const piecesEl = document.querySelectorAll('.piece');
+    const randomOffset = () => `${(Math.random() - 0.5) * 300}px`;
+    const randomDegrees = () => `${(Math.random() - 0.5) * 300}deg`;
+    const randomScale = () => `${(Math.random() - 0.5) * 10}`;
+    boxEl.addEventListener('mouseover', () => {
+      console.log('enter');
+      animate(piecesEl, {
+        rotateX: () => randomDegrees(),
+        rotateY: () => randomDegrees(),
+        rotateZ: () => randomDegrees(),
+        scale: () => randomScale(),
+        x: () => randomOffset(),
+        y: () => randomOffset(),
+        z: () => randomOffset(),
+        ease: 'in(3)',
+        duration: 1000
+      });
+    });
+
+    boxEl.addEventListener('mouseout', () => {
+      console.log('leave');
+      animate(piecesEl, {
+        rotateX: '0',
+        rotateY: '0',
+        rotateZ: '0',
+        scale: 1,
+        x: '0px',
+        y: '0px',
+        z: 0
+      });
+    });
+  </script>
 </html>
