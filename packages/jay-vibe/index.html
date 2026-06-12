@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jay Vibe - 火车叨位去</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
+    <script>
+      const { animate } = anime;
+    </script>
+  </head>
+  <body>
+    <audio preload="metadata" crossorigin="anonymous">
+      <source src="../ariana-vibe/assets/hate.mp3" type="audio/mpeg" />
+    </audio>
+
+    <main class="stage" aria-label="火车叨位去歌词动画"></main>
+
+    <script>
+      const audioEl = document.querySelector('audio');
+
+      const fftSize = 1024;
+      let audioContext;
+      let analyser;
+      let frequencyData;
+      let hasAudioGraph = false;
+      let lyrics = [];
+    </script>
+  </body>
+</html>
