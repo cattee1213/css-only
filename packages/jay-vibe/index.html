@@ -6,26 +6,280 @@
     <title>Jay Vibe - 火车叨位去</title>
     <link rel="stylesheet" href="./style.css" />
     <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
-    <script>
-      const { animate } = anime;
-    </script>
   </head>
   <body>
     <audio preload="metadata" crossorigin="anonymous">
-      <source src="../ariana-vibe/assets/hate.mp3" type="audio/mpeg" />
+      <source src="./assets/train.mp3" type="audio/mpeg" />
     </audio>
-
-    <main class="stage" aria-label="火车叨位去歌词动画"></main>
+    <div class="mask">
+      <div class="left"></div>
+      <div class="right"></div>
+    </div>
+    <div class="disk"></div>
+    <div class="black-disk"></div>
+    <div class="lyrics-panel">
+      <div class="lyric-line lyric-current"></div>
+    </div>
+    <div class="dots-box">
+      <div class="dot" style="--r: -10deg"></div>
+      <div class="dot" style="--r: -20deg"></div>
+      <div class="dot" style="--r: -30deg"></div>
+      <div class="dot" style="--r: -40deg"></div>
+      <div class="dot" style="--r: -50deg"></div>
+      <div class="dot" style="--r: -60deg"></div>
+      <div class="dot" style="--r: -70deg"></div>
+      <div class="dot" style="--r: -80deg"></div>
+      <div class="dot" style="--r: -90deg"></div>
+      <div class="dot" style="--r: -100deg"></div>
+      <div class="dot" style="--r: -110deg"></div>
+      <div class="dot" style="--r: -120deg"></div>
+      <div class="dot" style="--r: -130deg"></div>
+      <div class="dot" style="--r: -140deg"></div>
+      <div class="dot" style="--r: -150deg"></div>
+      <div class="dot" style="--r: -160deg"></div>
+    </div>
 
     <script>
-      const audioEl = document.querySelector('audio');
+      const { animate, spring, splitText, stagger } = anime;
 
+      const audioEl = document.querySelector('audio');
+      const diskEl = document.querySelector('.disk');
+      const dotsEl = document.querySelectorAll('.dot');
+      const lyricCurrentEl = document.querySelector('.lyric-current');
       const fftSize = 1024;
+      const dotCount = 16;
+      const binCount = fftSize / 2;
+      const step = Math.floor(binCount / dotCount);
+      const dotLevels = new Float32Array(dotCount);
+      const frequencyData = new Uint8Array(binCount);
+      let requestAniId;
+      let frame = 0;
+      let isDotsScattering = false;
+      let scatterTimer;
       let audioContext;
       let analyser;
-      let frequencyData;
       let hasAudioGraph = false;
       let lyrics = [];
+      let lyricIndex = -1;
+
+      function initAudioGraph() {
+        if (!audioContext) {
+          audioContext = new AudioContext().createMediaElementSource(audioEl);
+        }
+        analyser = audioContext.context.createAnalyser();
+        audioContext.connect(analyser);
+        analyser.connect(audioContext.context.destination);
+        analyser.fftSize = fftSize;
+        analyser.smoothingTimeConstant = 0.78;
+        hasAudioGraph = true;
+      }
+      initAudioGraph();
+
+      const playingAni = animate(diskEl, {
+        loop: true,
+        rotate: 360,
+        ease: 'linear',
+        duration: 20000,
+        autoplay: false
+      });
+
+      diskEl.addEventListener('click', () => {
+        if (audioEl.paused || audioEl.ended) {
+          audioEl.play();
+        } else {
+          audioEl.pause();
+        }
+      });
+
+      audioEl.addEventListener('loadedmetadata', () => {
+        loadLyrics();
+      });
+
+      audioEl.addEventListener('play', () => {
+        playingAni.play();
+        scatterDots();
+      });
+
+      audioEl.addEventListener('playing', () => {
+        if (requestAniId) return;
+        requestAni();
+      });
+
+      audioEl.addEventListener('ended', () => {
+        playingAni.pause();
+        cancelAnimationFrame(requestAniId);
+        requestAniId = undefined;
+        resetDots();
+      });
+      audioEl.addEventListener('pause', () => {
+        playingAni.pause();
+        cancelAnimationFrame(requestAniId);
+        requestAniId = undefined;
+        resetDots();
+      });
+
+      audioEl.addEventListener('timeupdate', () => {
+        syncLyrics(audioEl.currentTime);
+      });
+
+      function resetDots() {
+        clearTimeout(scatterTimer);
+        isDotsScattering = false;
+        dotLevels.fill(0);
+        dotsEl.forEach((dot) => {
+          dot.style.setProperty('--level', '0');
+          animate(dot, {
+            scale: 0,
+            rotate: () => 'var(--r)',
+            opacity: 0,
+            duration: 220,
+            ease: 'inQuad'
+          });
+        });
+      }
+
+      function scatterDots() {
+        clearTimeout(scatterTimer);
+        isDotsScattering = true;
+        dotLevels.fill(0);
+
+        dotsEl.forEach((dot, index) => {
+          dot.style.setProperty('--level', '0');
+          animate(dot, {
+            scale: [0, 1],
+            rotate: () => 'var(--r)',
+            opacity: [0, 0.58],
+            duration: 540,
+            delay: index * 18,
+            ease: 'outBack(1.8)'
+          });
+        });
+
+        scatterTimer = setTimeout(
+          () => {
+            isDotsScattering = false;
+          },
+          540 + dotsEl.length * 18
+        );
+      }
+
+      function requestAni() {
+        if (!analyser || audioEl.paused || audioEl.ended) {
+          requestAniId = undefined;
+          return false;
+        }
+
+        requestAniId = requestAnimationFrame(requestAni);
+        analyser.getByteFrequencyData(frequencyData);
+        frame += 1;
+
+        dotsEl.forEach((dot, index) => {
+          const start = 4 + index * Math.floor(step * 0.72);
+          const end = Math.min(start + step, frequencyData.length);
+          let sum = 0;
+
+          for (let i = start; i < end; i++) {
+            sum += frequencyData[i];
+          }
+
+          const averageVal = sum / Math.max(1, end - start);
+          const targetLevel = Math.min(1, Math.pow(averageVal / 255, 0.75));
+          dotLevels[index] += (targetLevel - dotLevels[index]) * 0.32;
+
+          const level = dotLevels[index];
+          dot.style.setProperty('--level', level.toFixed(3));
+
+          if (!isDotsScattering && frame % 3 === 0) {
+            animate(dot, {
+              scale: 1 + level * 0.38,
+              rotate: () => 'var(--r)',
+              opacity: 0.55 + level * 0.45,
+              duration: 120,
+              ease: 'outQuad'
+            });
+          }
+        });
+      }
+
+      async function loadLyrics() {
+        try {
+          const response = await fetch('./assets/train.lrc');
+          const lrcText = await response.text();
+          lyrics = parseLrc(lrcText);
+          renderLyricAt(0);
+        } catch (error) {
+          lyricCurrentEl.textContent = '';
+          console.warn('Failed to load lyrics:', error);
+        }
+      }
+
+      function parseLrc(lrcText) {
+        return lrcText
+          .split(/\r?\n/)
+          .flatMap((line) => {
+            const text = line
+              .replace(/(?:\[\d{2}:\d{2}(?:\.\d{2,3})?\])+/g, '')
+              .trim();
+            const times = [
+              ...line.matchAll(/\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g)
+            ];
+
+            return times.map((match) => {
+              const minute = Number(match[1]);
+              const second = Number(match[2]);
+              const millisecond = Number((match[3] || '0').padEnd(3, '0'));
+
+              return {
+                time: minute * 60 + second + millisecond / 1000,
+                text
+              };
+            });
+          })
+          .filter((lyric) => lyric.text)
+          .sort((a, b) => a.time - b.time);
+      }
+
+      function syncLyrics(currentTime) {
+        if (!lyrics.length) return;
+
+        let nextIndex = lyrics.findIndex((lyric, index) => {
+          const nextLyric = lyrics[index + 1];
+          return (
+            currentTime >= lyric.time &&
+            (!nextLyric || currentTime < nextLyric.time)
+          );
+        });
+
+        if (nextIndex === -1) {
+          nextIndex = currentTime < lyrics[0].time ? 0 : lyrics.length - 1;
+        }
+
+        renderLyricAt(nextIndex);
+      }
+
+      function renderLyricAt(index) {
+        if (index === lyricIndex || !lyrics[index]) return;
+
+        lyricIndex = index;
+        animateLyricLine(lyrics[index].text);
+      }
+
+      function animateLyricLine(text) {
+        lyricCurrentEl.textContent = text;
+        const { words } = splitText(lyricCurrentEl, {
+          words: { wrap: 'clip' }
+        });
+
+        animate(words, {
+          y: [{ to: ['100%', '0%'] }],
+          duration: 250,
+          ease: spring({
+            bounce: 0.5,
+            duration: 250
+          }),
+          delay: stagger(50)
+        });
+      }
     </script>
   </body>
 </html>

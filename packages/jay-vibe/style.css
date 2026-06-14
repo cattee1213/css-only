@@ -6,6 +6,130 @@
 
 body {
   margin: 0;
-  min-height: 100%;
-  background: #191919;
+  min-height: 100vh;
+  position: relative;
+  background-color: #191919;
+  background-image: url(./assets/image.png);
+  background-size: contain;
+  background-position: 0 100px;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mask {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      #191919,
+      #191919,
+      transparent,
+      #191919,
+      #191919,
+      #191919,
+      #191919
+    ),
+    linear-gradient(to right, #191919, transparent, #191919);
+  display: flex;
+}
+
+.mask .left {
+  width: 50%;
+  height: 100%;
+  /* backdrop-filter: blur(30px); */
+}
+.mask .right {
+  width: 50%;
+  height: 100%;
+  backdrop-filter: blur(30px);
+}
+
+.disk {
+  width: 100px;
+  height: 100px;
+  background-image: url('./assets/image.png');
+  background-size: cover;
+  z-index: 9;
+  border-radius: 50%;
+  display: flex;
+  justify-content: flex-start;
+  position: absolute;
+  cursor: pointer;
+  top: calc(50% - 100px);
+}
+
+.black-disk {
+  position: absolute;
+  height: 100px;
+  width: 50px;
+  border-top-left-radius: 50px;
+  border-bottom-left-radius: 50px;
+  background-color: #19191950;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+  transform: translateX(-50%);
+  top: calc(50% - 100px);
+}
+
+.dots-box {
+  background-size: cover;
+  z-index: 11;
+  position: absolute;
+  pointer-events: none;
+}
+
+.dot {
+  --level: 0;
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  overflow: visible;
+  opacity: 0;
+  transform: rotate(var(--r)) scale(0);
+  transform-origin: top left;
+  top: calc(50% - 50px);
+}
+.dot::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  position: absolute;
+  bottom: -47.5px;
+  left: 2.5px;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 calc(2px + var(--level) * 10px) rgba(255, 255, 255, 0.7);
+  will-change: box-shadow;
+}
+
+.lyrics-panel {
+  position: fixed;
+  transform: translateY(-50%);
+  pointer-events: none;
+  left: 20px;
+  right: 20px;
+  top: 65%;
+  width: auto;
+  min-height: 64px;
+}
+
+.lyric-current {
+  min-height: 64px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.lyric-current span {
+  background:
+    linear-gradient(#ff9933, #ff993360),
+    linear-gradient(to right, #ffffff50, transparent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
