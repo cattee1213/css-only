@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jay Frame</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="ambient ambient-left"></div>
+      <div class="ambient ambient-right"></div>
+
+      <header class="hero-copy">
+        <p class="eyebrow">前端视觉作品</p>
+        <h1>周杰伦专辑封面，由歌词铺满整个画面。</h1>
+        <p class="lede">
+          文字完全透明，封面图只出现在文字内部。切换时不再飞散，直接从当前专辑
+          scramble 成下一张专辑。
+        </p>
+      </header>
+
+      <main class="stage-card">
+        <div class="stage-meta">
+          <div>
+            <p class="meta-label">Now Playing</p>
+            <h2 class="album-title">Jay</h2>
+          </div>
+          <div class="meta-right">
+            <p class="meta-label">Transition</p>
+            <p class="phase-label">Building lyric wall</p>
+          </div>
+        </div>
+
+        <section class="frame-stage">
+          <div class="frame-stack">
+            <svg
+              class="lyric-cloud"
+              viewBox="0 0 1000 1000"
+              preserveAspectRatio="xMidYMid meet"
+              aria-label="Lyrics filled with album cover image"
+            >
+              <defs>
+                <pattern
+                  id="album-fill"
+                  patternUnits="userSpaceOnUse"
+                  width="1000"
+                  height="1000"
+                >
+                  <image
+                    class="pattern-image"
+                    href=""
+                    width="1000"
+                    height="1000"
+                    preserveAspectRatio="xMidYMid slice"
+                  ></image>
+                </pattern>
+              </defs>
+              <rect class="frame-glass" x="0" y="0" width="1000" height="1000"></rect>
+            </svg>
+          </div>
+
+          <aside class="story-panel">
+            <div class="story-block">
+              <p class="story-label">Frame</p>
+              <p class="story-text current-album">Jay</p>
+            </div>
+            <div class="story-block">
+              <p class="story-label">Lyric Fragments</p>
+              <p class="story-text lyric-snippet">黑色幽默 / 难过 / 离开 / 责备自己</p>
+            </div>
+            <div class="story-block">
+              <p class="story-label">Sequence</p>
+              <p class="story-text sequence-text">01 / 14</p>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="stage-footer">
+          <div class="timeline-rail">
+            <div class="timeline-fill"></div>
+          </div>
+          <p class="footer-note">展示节奏：完整展示 → scramble → 下一张专辑</p>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const FRAME_DIR = './assets/frames';
+      const LYRICS_DIR = './assets/lyrics';
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const SCRAMBLE_CHARSET =
+        '周杰伦0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!?#$%&*+-=';
+      const LOOP_DURATIONS = {
+        hold: 5200,
+        scramble: 1300,
+        settle: 950
+      };
+
+      const albums = [
+        { album: 'Jay', image: 'Jay.png', lyrics: ['黑色幽默'] },
+        { album: '范特西', image: '范特西.png', lyrics: ['对不起'] },
+        { album: '八度空间', image: '八度空间.png', lyrics: ['龙拳'] },
+        { album: '叶惠美', image: '叶惠美.png', lyrics: ['你听得到'] },
+        { album: '七里香', image: '七里香.png', lyrics: ['乱舞春秋'] },
+        { album: '11月的萧邦', image: '11月的萧邦.png', lyrics: ['黑色幽默'] },
+        { album: '依然范特西', image: '依然范特西.png', lyrics: ['迷迭香'] },
+        { album: '我很忙', image: '我很忙.png', lyrics: ['我不配'] },
+        { album: '魔杰座', image: '魔杰座.png', lyrics: ['自导自演'] },
+        { album: '跨时代', image: '跨时代.png', lyrics: ['飘移'] },
+        { album: '哎哟不错哦', image: '哎哟不错哦.png', lyrics: ['土耳其冰淇淋'] },
+        { album: '十二新作', image: '十二新作.png', lyrics: ['自导自演'] },
+        { album: '太阳之子', image: '太阳之子.png', lyrics: ['太阳之子'] },
+        { album: '最伟大的作品', image: '最伟大的作品.png', lyrics: ['还在流浪'] }
+      ];
+
+      const lyricCloudEl = document.querySelector('.lyric-cloud');
+      const patternImageEl = document.querySelector('.pattern-image');
+      const albumTitleEl = document.querySelector('.album-title');
+      const currentAlbumEl = document.querySelector('.current-album');
+      const phaseLabelEl = document.querySelector('.phase-label');
+      const sequenceTextEl = document.querySelector('.sequence-text');
+      const lyricSnippetEl = document.querySelector('.lyric-snippet');
+      const timelineFillEl = document.querySelector('.timeline-fill');
+
+      const albumCache = new Map();
+      const glyphNodes = [];
+      const stageConfig = {
+        width: 1000,
+        height: 1000,
+        columns: 12,
+        rows: 20,
+        paddingX: 54,
+        paddingY: 58
+      };
+
+      function delay(ms) {
+        return new Promise((resolve) => {
+          window.setTimeout(resolve, ms);
+        });
+      }
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function easeInOutCubic(value) {
+        return value < 0.5
+          ? 4 * value * value * value
+          : 1 - Math.pow(-2 * value + 2, 3) / 2;
+      }
+
+      function sanitizeLyricLine(line) {
+        return line
+          .replace(/\[[^\]]*]/g, ' ')
+          .replace(/[A-Za-z]+:/g, ' ')
+          .replace(/\([^)]*\)/g, ' ')
+          .replace(/[^\p{Script=Han}A-Za-z0-9]+/gu, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function splitLyricFragments(line) {
+        return line
+          .split(/[，。！？、；：,.!?/]/)
+          .map((part) => sanitizeLyricLine(part))
+          .filter((part) => part.length >= 2)
+          .flatMap((part) => {
+            if (part.length <= 7) return [part];
+            const chunks = [];
+
+            for (let index = 0; index < part.length; index += 5) {
+              chunks.push(part.slice(index, index + 5));
+            }
+
+            return chunks;
+          });
+      }
+
+      function parseLrc(text) {
+        return text
+          .split(/\r?\n/)
+          .flatMap((line) => {
+            const stripped = line.replace(/\[[^\]]+]/g, '').trim();
+            return stripped ? splitLyricFragments(stripped) : [];
+          })
+          .filter(Boolean);
+      }
+
+      async function loadText(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to load ' + url);
+        }
+
+        return response.text();
+      }
+
+      async function buildAlbumEntry(entry) {
+        if (albumCache.has(entry.album)) {
+          return albumCache.get(entry.album);
+        }
+
+        const imageUrl = FRAME_DIR + '/' + entry.image;
+        const lyricLines = [...entry.lyrics];
+
+        for (const title of entry.lyrics) {
+          const lyricUrl = LYRICS_DIR + '/' + title + '-周杰伦.lrc';
+          const lrcText = await loadText(lyricUrl);
+          lyricLines.push(...parseLrc(lrcText));
+        }
+
+        const result = {
+          ...entry,
+          imageUrl,
+          lyricsPool: lyricLines.filter((line) => line && line.length >= 2)
+        };
+
+        albumCache.set(entry.album, result);
+        return result;
+      }
+
+      function ensureGlyphPool(count) {
+        while (glyphNodes.length < count) {
+          const node = document.createElementNS(SVG_NS, 'text');
+          node.classList.add('lyric-glyph');
+          node.setAttribute('text-anchor', 'middle');
+          node.setAttribute('dominant-baseline', 'middle');
+          lyricCloudEl.appendChild(node);
+          glyphNodes.push(node);
+        }
+      }
+
+      function pickLyric(pool, index) {
+        if (!pool.length) return '周杰伦';
+        return pool[index % pool.length];
+      }
+
+      function createAlbumState(albumData) {
+        const grid = [];
+        const innerWidth = stageConfig.width - stageConfig.paddingX * 2;
+        const innerHeight = stageConfig.height - stageConfig.paddingY * 2;
+        const xStep = innerWidth / (stageConfig.columns - 1);
+        const yStep = innerHeight / (stageConfig.rows - 1);
+        let lyricIndex = 0;
+
+        for (let row = 0; row < stageConfig.rows; row += 1) {
+          for (let column = 0; column < stageConfig.columns; column += 1) {
+            const x = stageConfig.paddingX + column * xStep + (row % 2 === 0 ? 0 : xStep * 0.18);
+            const y = stageConfig.paddingY + row * yStep;
+            const text = pickLyric(albumData.lyricsPool, lyricIndex);
+            const fontSize = clamp(33 - text.length * 1.8 + randomBetween(-2, 2), 16, 34);
+
+            grid.push({
+              x,
+              y,
+              text,
+              fontSize,
+              textLength: clamp(xStep * 0.82, 48, 86),
+              opacity: clamp(0.84 + randomBetween(-0.08, 0.08), 0.7, 0.96),
+              rotation: randomBetween(-6, 6)
+            });
+            lyricIndex += 1;
+          }
+        }
+
+        return grid;
+      }
+
+      function paintState(state) {
+        ensureGlyphPool(state.length);
+
+        glyphNodes.forEach((node, index) => {
+          const glyph = state[index];
+          if (!glyph) {
+            node.style.opacity = '0';
+            return;
+          }
+
+          node.textContent = glyph.text;
+          node.setAttribute('x', glyph.x);
+          node.setAttribute('y', glyph.y);
+          node.setAttribute(
+            'transform',
+            'rotate(' + glyph.rotation.toFixed(2) + ' ' + glyph.x + ' ' + glyph.y + ')'
+          );
+          node.setAttribute('textLength', glyph.textLength.toFixed(1));
+          node.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+          node.style.fontSize = glyph.fontSize.toFixed(1) + 'px';
+          node.style.opacity = glyph.opacity.toFixed(3);
+        });
+      }
+
+      function buildScrambleState(state) {
+        return state.map((glyph) => ({
+          ...glyph,
+          text: randomCharCluster(),
+          opacity: clamp(glyph.opacity * randomBetween(0.62, 0.9), 0.4, 0.94),
+          rotation: glyph.rotation + randomBetween(-18, 18),
+          fontSize: clamp(glyph.fontSize * randomBetween(0.92, 1.08), 15, 36),
+          textLength: clamp(glyph.textLength * randomBetween(0.92, 1.08), 44, 92)
+        }));
+      }
+
+      function interpolateGlyph(fromGlyph, toGlyph, progress) {
+        return {
+          x: fromGlyph.x + (toGlyph.x - fromGlyph.x) * progress,
+          y: fromGlyph.y + (toGlyph.y - fromGlyph.y) * progress,
+          fontSize: fromGlyph.fontSize + (toGlyph.fontSize - fromGlyph.fontSize) * progress,
+          textLength: fromGlyph.textLength + (toGlyph.textLength - fromGlyph.textLength) * progress,
+          opacity: fromGlyph.opacity + (toGlyph.opacity - fromGlyph.opacity) * progress,
+          rotation: fromGlyph.rotation + (toGlyph.rotation - fromGlyph.rotation) * progress,
+          text: progress < 0.5 ? fromGlyph.text : toGlyph.text
+        };
+      }
+
+      async function animateState(fromState, toState, duration) {
+        const start = performance.now();
+        const count = Math.max(fromState.length, toState.length);
+        ensureGlyphPool(count);
+
+        return new Promise((resolve) => {
+          function frame(now) {
+            const progress = clamp((now - start) / duration, 0, 1);
+            const eased = easeInOutCubic(progress);
+
+            for (let index = 0; index < count; index += 1) {
+              const fromGlyph = fromState[index] || fromState[fromState.length - 1];
+              const toGlyph = toState[index] || toState[toState.length - 1];
+              const glyph = interpolateGlyph(fromGlyph, toGlyph, eased);
+              const node = glyphNodes[index];
+
+              node.textContent = glyph.text;
+              node.setAttribute('x', glyph.x);
+              node.setAttribute('y', glyph.y);
+              node.setAttribute(
+                'transform',
+                'rotate(' + glyph.rotation.toFixed(2) + ' ' + glyph.x + ' ' + glyph.y + ')'
+              );
+              node.setAttribute('textLength', glyph.textLength.toFixed(1));
+              node.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+              node.style.fontSize = glyph.fontSize.toFixed(1) + 'px';
+              node.style.opacity = glyph.opacity.toFixed(3);
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(frame);
+            } else {
+              resolve();
+            }
+          }
+
+          requestAnimationFrame(frame);
+        });
+      }
+
+      function randomCharCluster() {
+        const length = Math.round(randomBetween(2, 5));
+        let output = '';
+
+        for (let index = 0; index < length; index += 1) {
+          output += SCRAMBLE_CHARSET[Math.floor(Math.random() * SCRAMBLE_CHARSET.length)];
+        }
+
+        return output;
+      }
+
+      function snippetFromPool(pool) {
+        return pool.slice(0, 4).join(' / ');
+      }
+
+      function updateTimeline(start, end) {
+        const from = clamp(start, 0, 1);
+        const to = clamp(end, 0, 1);
+        timelineFillEl.animate(
+          [
+            { transform: 'scaleX(' + from + ')' },
+            { transform: 'scaleX(' + to + ')' }
+          ],
+          {
+            duration: 520,
+            fill: 'forwards',
+            easing: 'cubic-bezier(0.33, 1, 0.68, 1)'
+          }
+        );
+      }
+
+      function setAlbumMeta(albumData, index, phase) {
+        patternImageEl.setAttribute('href', albumData.imageUrl);
+        albumTitleEl.textContent = albumData.album;
+        currentAlbumEl.textContent = albumData.album;
+        phaseLabelEl.textContent = phase;
+        sequenceTextEl.textContent =
+          String(index + 1).padStart(2, '0') + ' / ' + String(albums.length).padStart(2, '0');
+        lyricSnippetEl.textContent = snippetFromPool(albumData.lyricsPool);
+      }
+
+      async function runAlbumLoop() {
+        const preparedAlbums = await Promise.all(albums.map((entry) => buildAlbumEntry(entry)));
+        let currentIndex = 0;
+        let currentState = createAlbumState(preparedAlbums[0]);
+
+        setAlbumMeta(preparedAlbums[0], 0, 'Building lyric wall');
+        paintState(currentState);
+        updateTimeline(0, 1 / preparedAlbums.length);
+        await delay(260);
+
+        for (;;) {
+          const albumData = preparedAlbums[currentIndex];
+          setAlbumMeta(albumData, currentIndex, 'Hold frame');
+          paintState(currentState);
+          await delay(LOOP_DURATIONS.hold);
+
+          setAlbumMeta(albumData, currentIndex, 'Scramble text');
+          const scrambleState = buildScrambleState(currentState);
+          await animateState(currentState, scrambleState, LOOP_DURATIONS.scramble);
+
+          const nextIndex = (currentIndex + 1) % preparedAlbums.length;
+          const nextAlbum = preparedAlbums[nextIndex];
+          const nextState = createAlbumState(nextAlbum);
+
+          setAlbumMeta(nextAlbum, nextIndex, 'Reveal next cover');
+          updateTimeline(
+            nextIndex / preparedAlbums.length,
+            (nextIndex + 1) / preparedAlbums.length
+          );
+          await animateState(scrambleState, nextState, LOOP_DURATIONS.settle);
+
+          currentIndex = nextIndex;
+          currentState = nextState;
+        }
+      }
+
+      runAlbumLoop().catch((error) => {
+        console.error(error);
+        phaseLabelEl.textContent = 'Unable to load assets';
+      });
+    </script>
+  </body>
+</html>
