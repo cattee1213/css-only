@@ -3,43 +3,299 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jay Frame</title>
+    <title>Jay Frame Demo</title>
     <link rel="stylesheet" href="./style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
   </head>
   <body>
-    <div class="frame"></div>
-    <script>
-      const imagePrefix = './assets/frames/';
-      const albums = [
-        { album: 'Jay', image: 'Jay.png', lyrics: ['黑色幽默'] },
-        { album: '范特西', image: '范特西.png', lyrics: ['对不起'] },
-        { album: '八度空间', image: '八度空间.png', lyrics: ['龙拳'] },
-        { album: '叶惠美', image: '叶惠美.png', lyrics: ['你听得到'] },
-        { album: '七里香', image: '七里香.png', lyrics: ['乱舞春秋'] },
-        { album: '11月的萧邦', image: '11月的萧邦.png', lyrics: ['黑色幽默'] },
-        { album: '依然范特西', image: '依然范特西.png', lyrics: ['迷迭香'] },
-        { album: '我很忙', image: '我很忙.png', lyrics: ['我不配'] },
-        { album: '魔杰座', image: '魔杰座.png', lyrics: ['自导自演'] },
-        { album: '跨时代', image: '跨时代.png', lyrics: ['飘移'] },
-        {
-          album: '哎哟不错哦',
-          image: '哎哟不错哦.png',
-          lyrics: ['土耳其冰淇淋']
-        },
-        { album: '十二新作', image: '十二新作.png', lyrics: ['自导自演'] },
-        { album: '太阳之子', image: '太阳之子.png', lyrics: ['太阳之子'] },
-        {
-          album: '最伟大的作品',
-          image: '最伟大的作品.png',
-          lyrics: ['还在流浪']
-        }
-      ];
+    <main class="stage">
+      <section class="album-frame" id="album-frame">
+        <div class="album-label" id="album-label"></div>
+        <svg class="album-svg" viewBox="0 0 640 640" role="img" aria-label="周杰伦专辑词云">
+          <defs>
+            <mask id="word-mask">
+              <rect id="mask-rect" width="640" height="640" fill="black" />
+              <g id="mask-words"></g>
+            </mask>
+            <filter id="cover-brighten">
+              <feComponentTransfer>
+                <feFuncR type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
+                <feFuncG type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
+                <feFuncB type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
+              </feComponentTransfer>
+            </filter>
+          </defs>
+          <rect id="frame-base" width="640" height="640" rx="24" class="frame-base" />
+          <image id="cover-backdrop" x="0" y="0" width="640" height="640" preserveAspectRatio="xMidYMid meet" class="cover-backdrop" />
+          <g id="word-fill" class="word-fill"></g>
+          <image id="cover-image" x="0" y="0" width="640" height="640" preserveAspectRatio="xMidYMid meet" mask="url(#word-mask)" filter="url(#cover-brighten)" />
+        </svg>
+      </section>
+    </main>
 
-      const frameEl = document.querySelector('.frame');
-      frameEl.style.setProperty(
-        'background-image',
-        `url(${imagePrefix + albums[0].image})`
-      );
+    <script>
+      const { animate, utils } = anime;
+      const { shuffle } = utils;
+
+      const BASE_FRAME = 640;
+      const PRIMARY_COUNT = 90;
+      const PRIMARY_SIZE = 18;
+      const FILLER_SIZE = 10;
+      const PADDING = 14;
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const SWITCH_MS = 5000;
+      const ALBUMS = [
+        ['Jay', 'Jay.png', '黑色幽默-周杰伦.lrc'],
+        ['范特西', '范特西.png', '对不起-周杰伦.lrc'],
+        ['八度空间', '八度空间.png', '龙拳-周杰伦.lrc'],
+        ['叶惠美', '叶惠美.png', '你听得到-周杰伦.lrc'],
+        ['七里香', '七里香.png', '乱舞春秋-周杰伦.lrc'],
+        ['11月的萧邦', '11月的萧邦.png', '黑色幽默-周杰伦.lrc'],
+        ['依然范特西', '依然范特西.png', '迷迭香-周杰伦.lrc'],
+        ['我很忙', '我很忙.png', '我不配-周杰伦.lrc'],
+        ['魔杰座', '魔杰座.png', '自导自演-周杰伦.lrc'],
+        ['跨时代', '跨时代.png', '飘移-周杰伦.lrc'],
+        ['哎哟不错哦', '哎哟不错哦.png', '土耳其冰淇淋-周杰伦.lrc'],
+        ['十二新作', '十二新作.png', '自导自演-周杰伦.lrc'],
+        ['太阳之子', '太阳之子.png', '太阳之子-周杰伦.lrc'],
+        ['最伟大的作品', '最伟大的作品.png', '还在流浪-周杰伦.lrc']
+      ].map(([title, image, lyric]) => ({
+        title,
+        image: `./assets/frames/${image}`,
+        lyric: `./assets/lyrics/${lyric}`
+      }));
+
+      const frameEl = document.getElementById('album-frame');
+      const svgEl = document.querySelector('.album-svg');
+      const frameBase = document.getElementById('frame-base');
+      const maskRect = document.getElementById('mask-rect');
+      const mask = document.getElementById('mask-words');
+      const wordFill = document.getElementById('word-fill');
+      const label = document.getElementById('album-label');
+      const cover = document.getElementById('cover-image');
+      const backdrop = document.getElementById('cover-backdrop');
+      const ctx = document.createElement('canvas').getContext('2d');
+      const lyricCache = new Map();
+      const imageMetaCache = new Map();
+      const frame = { width: BASE_FRAME, height: BASE_FRAME, scale: 1 };
+      let currentIndex = -1;
+
+      const splitLine = (line) =>
+        line.split(/[，。！？；、]/).map((part) => part.trim()).filter(Boolean);
+
+      const fragments = (text) => {
+        const result = [];
+        for (let size = 2; size <= 4; size += 1) {
+          for (let i = 0; i <= text.length - size; i += 1) {
+            result.push(text.slice(i, i + size));
+          }
+        }
+        return result;
+      };
+
+      const measure = (text, size) => {
+        const scaledSize = size * frame.scale;
+        ctx.font = `700 ${scaledSize}px "Microsoft YaHei", sans-serif`;
+        return {
+          text,
+          size: scaledSize,
+          width: ctx.measureText(text).width * 0.9,
+          height: scaledSize * 0.78
+        };
+      };
+
+      const overlaps = (a, b) =>
+        !(
+          a.x + a.width / 2 <= b.x - b.width / 2 ||
+          a.x - a.width / 2 >= b.x + b.width / 2 ||
+          a.y + a.height / 2 <= b.y - b.height / 2 ||
+          a.y - a.height / 2 >= b.y + b.height / 2
+        );
+
+      const inside = (word) =>
+        word.x - word.width / 2 >= PADDING &&
+        word.x + word.width / 2 <= frame.width - PADDING &&
+        word.y - word.height / 2 >= PADDING &&
+        word.y + word.height / 2 <= frame.height - PADDING;
+
+      function setFrameSize(width, height) {
+        frame.width = width;
+        frame.height = height;
+        frame.scale = Math.min(width, height) / BASE_FRAME;
+
+        frameEl.style.aspectRatio = `${width} / ${height}`;
+        svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        frameBase.setAttribute('width', width);
+        frameBase.setAttribute('height', height);
+        maskRect.setAttribute('width', width);
+        maskRect.setAttribute('height', height);
+
+        [cover, backdrop].forEach((image) => {
+          image.setAttribute('width', width);
+          image.setAttribute('height', height);
+        });
+      }
+
+      function getImageMeta(src) {
+        if (imageMetaCache.has(src)) {
+          return imageMetaCache.get(src);
+        }
+
+        const metaPromise = new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+          image.onerror = reject;
+          image.src = src;
+        });
+
+        imageMetaCache.set(src, metaPromise);
+        return metaPromise;
+      }
+
+      const cleanLyrics = (text) =>
+        text
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .filter((line) => !/^(词|曲|编曲|制作人|监制|和声|录音|混音|OP|SP)[:：]/.test(line))
+          .filter((line) => !/^.+\s-\s.+$/.test(line));
+
+      function buildWords(lines) {
+        const main = [];
+        const fill = [];
+
+        for (const line of lines) {
+          main.push(line);
+          for (const phrase of splitLine(line)) {
+            main.push(phrase);
+            fill.push(...fragments(phrase));
+          }
+        }
+
+        return [
+          ...main.slice(0, PRIMARY_COUNT).map((text) => measure(text, PRIMARY_SIZE)),
+          ...fill.slice(0, 140).map((text) => measure(text, FILLER_SIZE))
+        ].sort((a, b) => b.size - a.size);
+      }
+
+      function place(words) {
+        const placed = [];
+        const centerX = frame.width / 2;
+        const centerY = frame.height / 2;
+
+        for (const word of words) {
+          let done = false;
+
+          for (let step = 0; step < 2400; step += 1) {
+            const angle = step * 0.32;
+            const radius = 2 + step * 0.72;
+            const candidate = {
+              ...word,
+              x: centerX + Math.cos(angle) * radius,
+              y: centerY + Math.sin(angle) * radius * 0.9
+            };
+
+            if (inside(candidate) && !placed.some((item) => overlaps(candidate, item))) {
+              placed.push(candidate);
+              done = true;
+              break;
+            }
+          }
+
+          if (!done && word.size <= FILLER_SIZE) {
+            for (let i = 0; i < 1200; i += 1) {
+              const candidate = {
+                ...word,
+                x: 20 + Math.random() * (frame.width - 40),
+                y: 20 + Math.random() * (frame.height - 40)
+              };
+
+              if (inside(candidate) && !placed.some((item) => overlaps(candidate, item))) {
+                placed.push(candidate);
+                break;
+              }
+            }
+          }
+        }
+
+        return placed;
+      }
+
+      function draw(words) {
+        mask.replaceChildren();
+        wordFill.replaceChildren();
+        for (const word of words) {
+          const text = document.createElementNS(SVG_NS, 'text');
+          text.setAttribute('x', word.x);
+          text.setAttribute('y', word.y);
+          text.setAttribute('font-size', word.size);
+          text.setAttribute('font-weight', '700');
+          text.setAttribute('fill', 'white');
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dominant-baseline', 'central');
+          text.textContent = word.text;
+          mask.appendChild(text);
+          wordFill.appendChild(text.cloneNode(true));
+        }
+      }
+
+      async function getLyrics(path) {
+        if (!lyricCache.has(path)) {
+          const text = await fetch(path).then((response) => response.text());
+          lyricCache.set(path, cleanLyrics(text));
+        }
+        return lyricCache.get(path);
+      }
+
+      function animateLabel(text) {
+        if (!animate || typeof animate !== 'function') {
+          label.textContent = text;
+          return;
+        }
+
+        animate(label, {
+          opacity: [0.35, 1],
+          duration: 600,
+          ease: 'outQuad'
+        });
+
+        if (animate.scrambleText) {
+          animate(label, {
+            scrambleText: {
+              text,
+              chars: '周杰伦专辑黑色幽默范特西跨时代七里香0123456789',
+              speed: 0.5
+            },
+            duration: 900,
+            ease: 'linear'
+          });
+        } else {
+          label.textContent = text;
+        }
+      }
+
+      async function renderAlbum(index) {
+        currentIndex = index;
+        const album = ALBUMS[index];
+        const [lines, meta] = await Promise.all([
+          getLyrics(album.lyric),
+          getImageMeta(album.image)
+        ]);
+        if (index !== currentIndex) return;
+
+        setFrameSize(meta.width, meta.height);
+        cover.setAttribute('href', album.image);
+        backdrop.setAttribute('href', album.image);
+        animateLabel(album.title);
+        draw(place(buildWords(shuffle([...lines]))));
+      }
+
+      function nextAlbum() {
+        renderAlbum((currentIndex + 1 + ALBUMS.length) % ALBUMS.length);
+      }
+
+      renderAlbum(0);
+      setInterval(nextAlbum, SWITCH_MS);
     </script>
   </body>
 </html>
