@@ -11,7 +11,11 @@
     <main class="stage">
       <section class="album-frame" id="album-frame">
         <div class="album-label" id="album-label"></div>
-        <svg class="album-svg" viewBox="0 0 640 640" role="img" aria-label="周杰伦专辑词云">
+        <svg
+          class="album-svg"
+          viewBox="0 0 640 640"
+          role="img"
+          aria-label="周杰伦专辑词云">
           <defs>
             <mask id="word-mask">
               <rect id="mask-rect" width="640" height="640" fill="black" />
@@ -19,16 +23,48 @@
             </mask>
             <filter id="cover-brighten">
               <feComponentTransfer>
-                <feFuncR type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
-                <feFuncG type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
-                <feFuncB type="gamma" amplitude="1.05" exponent="0.92" offset="0" />
+                <feFuncR
+                  type="gamma"
+                  amplitude="1.05"
+                  exponent="0.92"
+                  offset="0" />
+                <feFuncG
+                  type="gamma"
+                  amplitude="1.05"
+                  exponent="0.92"
+                  offset="0" />
+                <feFuncB
+                  type="gamma"
+                  amplitude="1.05"
+                  exponent="0.92"
+                  offset="0" />
               </feComponentTransfer>
             </filter>
           </defs>
-          <rect id="frame-base" width="640" height="640" rx="24" class="frame-base" />
-          <image id="cover-backdrop" x="0" y="0" width="640" height="640" preserveAspectRatio="xMidYMid meet" class="cover-backdrop" />
+          <rect
+            id="frame-base"
+            width="640"
+            height="640"
+            rx="24"
+            class="frame-base" />
+          <image
+            id="cover-backdrop"
+            x="0"
+            y="0"
+            width="640"
+            height="640"
+            preserveAspectRatio="xMidYMid meet"
+            class="cover-backdrop" />
           <g id="word-fill" class="word-fill"></g>
-          <image id="cover-image" x="0" y="0" width="640" height="640" preserveAspectRatio="xMidYMid meet" mask="url(#word-mask)" filter="url(#cover-brighten)" />
+          <image
+            id="cover-image"
+            x="0"
+            y="0"
+            width="640"
+            height="640"
+            preserveAspectRatio="xMidYMid meet"
+            mask="url(#word-mask)"
+            filter="url(#cover-brighten)" />
         </svg>
       </section>
     </main>
@@ -38,27 +74,15 @@
       const { shuffle } = utils;
 
       const BASE_FRAME = 640;
-      const PRIMARY_COUNT = 90;
-      const PRIMARY_SIZE = 18;
-      const FILLER_SIZE = 10;
+      const PRIMARY_COUNT = 200;
+      const PRIMARY_SIZE = 24;
+      const FILLER_SIZE = 18;
       const PADDING = 14;
       const SVG_NS = 'http://www.w3.org/2000/svg';
-      const SWITCH_MS = 5000;
+      const SWITCH_MS = 8000;
       const ALBUMS = [
-        ['Jay', 'Jay.png', '黑色幽默-周杰伦.lrc'],
-        ['范特西', '范特西.png', '对不起-周杰伦.lrc'],
-        ['八度空间', '八度空间.png', '龙拳-周杰伦.lrc'],
-        ['叶惠美', '叶惠美.png', '你听得到-周杰伦.lrc'],
-        ['七里香', '七里香.png', '乱舞春秋-周杰伦.lrc'],
-        ['11月的萧邦', '11月的萧邦.png', '黑色幽默-周杰伦.lrc'],
-        ['依然范特西', '依然范特西.png', '迷迭香-周杰伦.lrc'],
-        ['我很忙', '我很忙.png', '我不配-周杰伦.lrc'],
-        ['魔杰座', '魔杰座.png', '自导自演-周杰伦.lrc'],
-        ['跨时代', '跨时代.png', '飘移-周杰伦.lrc'],
-        ['哎哟不错哦', '哎哟不错哦.png', '土耳其冰淇淋-周杰伦.lrc'],
-        ['十二新作', '十二新作.png', '自导自演-周杰伦.lrc'],
-        ['太阳之子', '太阳之子.png', '太阳之子-周杰伦.lrc'],
-        ['最伟大的作品', '最伟大的作品.png', '还在流浪-周杰伦.lrc']
+        ['哎哟不错哦', '哎哟不错哦.png', '窃爱-周杰伦.lrc'],
+        ['周杰伦的床边故事', '周杰伦的床边故事.png', '土耳其冰淇淋-周杰伦.lrc']
       ].map(([title, image, lyric]) => ({
         title,
         image: `./assets/frames/${image}`,
@@ -81,7 +105,10 @@
       let currentIndex = -1;
 
       const splitLine = (line) =>
-        line.split(/[，。！？；、]/).map((part) => part.trim()).filter(Boolean);
+        line
+          .split(/[，。！？；、]/)
+          .map((part) => part.trim())
+          .filter(Boolean);
 
       const fragments = (text) => {
         const result = [];
@@ -143,7 +170,8 @@
 
         const metaPromise = new Promise((resolve, reject) => {
           const image = new Image();
-          image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+          image.onload = () =>
+            resolve({ width: image.naturalWidth, height: image.naturalHeight });
           image.onerror = reject;
           image.src = src;
         });
@@ -157,7 +185,10 @@
           .split('\n')
           .map((line) => line.trim())
           .filter(Boolean)
-          .filter((line) => !/^(词|曲|编曲|制作人|监制|和声|录音|混音|OP|SP)[:：]/.test(line))
+          .filter(
+            (line) =>
+              !/^(词|曲|编曲|制作人|监制|和声|录音|混音|OP|SP)[:：]/.test(line)
+          )
           .filter((line) => !/^.+\s-\s.+$/.test(line));
 
       function buildWords(lines) {
@@ -173,7 +204,9 @@
         }
 
         return [
-          ...main.slice(0, PRIMARY_COUNT).map((text) => measure(text, PRIMARY_SIZE)),
+          ...main
+            .slice(0, PRIMARY_COUNT)
+            .map((text) => measure(text, PRIMARY_SIZE)),
           ...fill.slice(0, 140).map((text) => measure(text, FILLER_SIZE))
         ].sort((a, b) => b.size - a.size);
       }
@@ -195,7 +228,10 @@
               y: centerY + Math.sin(angle) * radius * 0.9
             };
 
-            if (inside(candidate) && !placed.some((item) => overlaps(candidate, item))) {
+            if (
+              inside(candidate) &&
+              !placed.some((item) => overlaps(candidate, item))
+            ) {
               placed.push(candidate);
               done = true;
               break;
@@ -210,7 +246,10 @@
                 y: 20 + Math.random() * (frame.height - 40)
               };
 
-              if (inside(candidate) && !placed.some((item) => overlaps(candidate, item))) {
+              if (
+                inside(candidate) &&
+                !placed.some((item) => overlaps(candidate, item))
+              ) {
                 placed.push(candidate);
                 break;
               }
